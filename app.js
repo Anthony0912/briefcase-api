@@ -18,7 +18,9 @@ const allowList = environment === 'test' || environment === 'dev' ?
         "http://192.168.1.113:3000",
     ]
     :
-    [];
+    [
+        "https://anthonykcardona.herokuapp.com"
+    ];
 
 const corsOptionsDelegate = (req, callback) => {
     let corsOptions = { origin: false };
