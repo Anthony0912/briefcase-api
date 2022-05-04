@@ -1,86 +1,72 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const cors = require('cors');
-const sgMail = require('@sendgrid/mail')
+const express = require("express");
+const errorHandler = require("./src/middlewares/error-handler.middleware");
+const { NotFound } = require("./src/middlewares/error.middleware");
+const FileData = require("./src/helpers/get-files-in-directory.helper");
+const morgan = require("morgan");
+const helmet = require("helmet");
+const cors = require("cors");
+const dotenv = require("dotenv");
 
-dotenv.config();
-
-const app = express();
-app.use(helmet());
-app.use(morgan("dev"));
-
-const mongo = require("mongodb").MongoClient;
-const url = "mongodb+srv://dba_mongo:1UjJXuN6vKWKt6CX@cluster0.jk1e2.mongodb.net/briefcase?retryWrites=true&w=majority";
-
-let db;
-
-mongo.connect(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}, (err, client) => {
-    if (err) {
-        console.error(err)
-        return
+class Server {
+    constructor() {
+        this.app = express();
+        this.config();
+        this.routes();
     }
-    db = client.db("briefcase")
-})
 
-const environment = process.env.APP_ENVIRONMENT;
-const allowList = environment === 'test' || environment === 'dev' ?
-    [
-        "http://localhost:3000",
-        "http://192.168.1.113:3000",
-    ]
-    :
-    [
-        "https://anthonykcardona.herokuapp.com"
-    ];
-
-const corsOptionsDelegate = (req, callback) => {
-    let corsOptions = { origin: false };
-    if (allowList.indexOf(req.header('Origin')) !== -1) {
-        corsOptions = { origin: true };
-    } else {
-        corsOptions = { origin: false };
+    config() {
+        dotenv.config();
+        this.app.set("port", process.env.PORT || 8000);
+        this.app.use(helmet());
+        this.app.use(morgan("dev"));
+        this.app.use(cors(this.configCors));
+        this.app.use(express.json());
+        this.app.use(express.urlencoded({ extended: false }));
     }
-    callback(null, corsOptions);
+
+    configCors(req, callback) {
+        const environment = process.env.APP_ENVIRONMENT;
+        const allowList = environment === 'test' || environment === 'development' ?
+            ["http://localhost:3000", "http://192.168.1.113:3000"] :
+            ["https://anthonykcardona.herokuapp.com"];
+
+        let corsOptions = { origin: false };
+        if (allowList.indexOf(req.header('Origin')) !== -1) {
+            corsOptions = { origin: true };
+        } else {
+            corsOptions = { origin: false };
+        }
+        callback(null, corsOptions);
+
+    }
+
+    routes() {
+        const fileData = new FileData()
+        const routeList = fileData.getFilesName("./src/routes/");
+        routeList.forEach((fileData) => {
+            const pathFileRoute = `./src/routes/${fileData.fileName}`;
+            require(pathFileRoute)(this.app);
+        });
+
+        this.app.get("/api", (req, res) => {
+            res.status(200).send("Welcome to the API BRIEFCASE...🚧🚧🌈🚀🚧🚧");
+        });
+
+        this.app.use(function (req, res, next) {
+            throw new NotFound("Unable to find the requested resource!");
+        });
+
+        this.app.use(errorHandler);
+    }
+
+    start() {
+        this.app.listen(this.app.get("port"), () => {
+            console.log("\nAPI: API BRIEFCASE");
+            console.log(`STATUS API: ${process.env.APP_ENVIRONMENT === 'production' ? "PRODUCTION" : process.env.APP_ENVIRONMENT === 'development' ? 'DEVELOPMENT' : 'TESTING'}`);
+            console.log(`Port: ${this.app.get("port")}\n`);
+        });
+    }
 }
 
-app.use(cors(corsOptionsDelegate));
-
-//Body Parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-app.post('/api/send-email', (req, res, next) => {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    const { to, from, subject, text } = req.body
-    const msg = {
-        to: to,
-        from: from,
-        subject: subject,
-        text: text
-    }
-    sgMail
-        .send(msg)
-        .then((response) => {
-            res.status(200).send(response);
-        })
-        .catch((error) => {
-            next(error)
-        })
-});
-
-app.get('/api/projects', (req, res, next) => {
-    //Call Data Base
-    db.collection('projects').find().toArray(function (err, result) {
-        if (err) {
-            throw err;
-        }
-        res.status(200).json(result)
-    });
-});
-
-module.exports = app;
+const server = new Server();
+exports.default = server;
