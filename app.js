@@ -11,7 +11,23 @@ const app = express();
 app.use(helmet());
 app.use(morgan("dev"));
 
-const environment = process.env.APP_ENVIROMENT;
+const mongo = require("mongodb").MongoClient;
+const url = "mongodb+srv://dba_mongo:1UjJXuN6vKWKt6CX@cluster0.jk1e2.mongodb.net/briefcase?retryWrites=true&w=majority";
+
+let db;
+
+mongo.connect(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+}, (err, client) => {
+    if (err) {
+        console.error(err)
+        return
+    }
+    db = client.db("briefcase")
+})
+
+const environment = process.env.APP_ENVIRONMENT;
 const allowList = environment === 'test' || environment === 'dev' ?
     [
         "http://localhost:3000",
@@ -34,7 +50,7 @@ const corsOptionsDelegate = (req, callback) => {
 
 app.use(cors(corsOptionsDelegate));
 
-//BodyParser
+//Body Parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -55,6 +71,16 @@ app.post('/api/send-email', (req, res, next) => {
         .catch((error) => {
             next(error)
         })
+});
+
+app.get('/api/projects', (req, res, next) => {
+    //Call Data Base
+    db.collection('projects').find().toArray(function (err, result) {
+        if (err) {
+            throw err;
+        }
+        res.status(200).json(result)
+    });
 });
 
 module.exports = app;
