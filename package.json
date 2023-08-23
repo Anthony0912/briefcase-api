@@ -1,0 +1,34 @@
+{
+  "name": "briefcase-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anthony0912/briefcase-api.git"
+  },
+  "author": "Anthony Keylor Cardona Mairena",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Anthony0912/briefcase-api/issues"
+  },
+  "homepage": "https://github.com/Anthony0912/briefcase-api#readme",
+  "dependencies": {
+    "@sendgrid/mail": "^7.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "express-validation": "^4.1.0",
+    "helmet": "^5.0.2",
+    "mongodb": "^4.5.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
