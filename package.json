@@ -28,6 +28,9 @@
     "morgan": "^1.10.0",
     "resend": "^1.1.0"
   },
+  "engines": {
+    "node": "16.18.0"
+  },
   "devDependencies": {
     "nodemon": "^2.0.15"
   }
