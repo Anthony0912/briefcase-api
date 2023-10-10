@@ -1,25 +1,12 @@
-const sgMail = require('@sendgrid/mail')
+const { Resend } = require("resend");
 
 exports.sendEmail = async (email) => {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    const { to, from, subject, text } = email
-    const msg = {
-        to: to,
-        from: from,
-        subject: subject,
-        text: text,
-        mail_settings: {
-            sandboxMode: {
-                enable: true
-            }
-        }
+    try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const response = await resend.emails.send(email);
+        return response;
+    } catch (error) {
+        console.log(error);
     }
-    const response = await sgMail
-        .send(msg)
-        .then((response) => {
-            return response;
-        })
-        .catch(err => { return err });
-    return response;
 };
 
